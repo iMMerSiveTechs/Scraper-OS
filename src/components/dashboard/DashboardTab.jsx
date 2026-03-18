@@ -16,6 +16,12 @@ const ALERT_COLORS = {
   info: { color: "#00ff88", bg: "#00ff8818", border: "#00ff8833" },
 };
 
+const SOURCE_COLORS = {
+  hn: "#ff6b35",
+  github: "#a78bfa",
+  producthunt: "#00ff88",
+};
+
 export function DashboardTab({
   runs = [],
   results = [],
@@ -23,10 +29,30 @@ export function DashboardTab({
   stats = { totalRuns: 0, successRate: 0, totalItems: 0, activeScrapers: 0 },
   onRefresh,
   onDismissAlert,
+  onRunScraper,
   isDemo = false,
+  customScrapers = [],
+  hasAIKey = false,
+  onNavigate,
 }) {
   const [activeFilter, setActiveFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
+
+  // Build dynamic filter list based on sources present in results
+  const dynamicFilters = useMemo(() => {
+    const sources = new Set(results.map((r) => r.source));
+    const base = [{ id: "all", label: "All" }];
+    for (const f of FILTERS.slice(1)) {
+      if (sources.has(f.id)) base.push(f);
+    }
+    // Add custom scraper sources
+    for (const s of customScrapers) {
+      if (sources.has(s.id) || sources.has(s.name)) {
+        base.push({ id: s.id, label: s.name.slice(0, 12) });
+      }
+    }
+    return base;
+  }, [results, customScrapers]);
 
   const filteredResults = useMemo(() => {
     if (activeFilter === "all") return results;
@@ -34,6 +60,36 @@ export function DashboardTab({
   }, [results, activeFilter]);
 
   const unreadAlerts = alerts.filter((a) => !a.read);
+
+  // Build sparkline data from results
+  const sparklineData = useMemo(() => {
+    const hourMap = {};
+    for (const r of results) {
+      if (r.scrapedAt) {
+        const hour = r.scrapedAt.slice(0, 13);
+        hourMap[hour] = (hourMap[hour] || 0) + 1;
+      }
+    }
+    return Object.entries(hourMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-24)
+      .map(([, count]) => count);
+  }, [results]);
+
+  // Cross-source detection
+  const crossSourceItems = useMemo(() => {
+    const titleSources = {};
+    for (const r of results) {
+      const norm = (r.title || "").toLowerCase().replace(/[^a-z0-9\s]/g, "").trim();
+      if (norm.length < 8) continue;
+      if (!titleSources[norm]) titleSources[norm] = { sources: new Set(), title: r.title, url: r.url };
+      titleSources[norm].sources.add(r.source);
+    }
+    return Object.values(titleSources)
+      .filter((t) => t.sources.size >= 2)
+      .map((t) => ({ ...t, sources: Array.from(t.sources) }))
+      .slice(0, 5);
+  }, [results]);
 
   const handleRefresh = async () => {
     if (!onRefresh || refreshing) return;
@@ -100,11 +156,176 @@ export function DashboardTab({
         />
         <StatCard
           label="Active Scrapers"
-          value={stats.activeScrapers}
+          value={stats.activeScrapers + customScrapers.filter((s) => s.enabled).length}
           color="#ff6b35"
           icon="&#9881;"
         />
       </div>
+
+      {/* Section 1.5: Source Manager + Intelligence Card */}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "24px", flexWrap: "wrap" }}>
+        {/* Source Manager */}
+        <div style={{
+          flex: "2 1 300px", background: "#0e0e18", border: "1px solid #1a1a2e",
+          borderRadius: "12px", overflow: "hidden",
+        }}>
+          <div style={{
+            padding: "10px 16px", borderBottom: "1px solid #1a1a2e", background: "#0c0c14",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+          }}>
+            <span style={{ fontSize: "10px", color: "#888", letterSpacing: "2px" }}>SOURCE MANAGER</span>
+            <button onClick={handleRefresh} disabled={refreshing} style={{
+              padding: "3px 10px", background: "#1a1a2e", border: "1px solid #2a2a3e",
+              borderRadius: "6px", color: refreshing ? "#666" : "#00ff88",
+              cursor: refreshing ? "not-allowed" : "pointer", fontSize: "10px", fontFamily: "inherit",
+            }}>
+              {refreshing ? "..." : "Run All"}
+            </button>
+          </div>
+          <div style={{ padding: "12px 16px" }}>
+            {/* Built-in scrapers */}
+            {[
+              { id: "hn", name: "Hacker News", color: "#ff6b35" },
+              { id: "github", name: "GitHub Trending", color: "#a78bfa" },
+              { id: "producthunt", name: "Product Hunt", color: "#da552f" },
+            ].map((src) => {
+              const srcResults = results.filter((r) => r.source === src.id);
+              const lastRun = runs.find((r) => r.scraperId === src.id);
+              return (
+                <div key={src.id} style={{
+                  display: "flex", alignItems: "center", gap: "10px",
+                  padding: "6px 0", borderBottom: "1px solid #12121e",
+                }}>
+                  <div style={{ width: "4px", height: "20px", borderRadius: "2px", background: src.color, flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: "11px", color: "#e0e0e8" }}>{src.name}</div>
+                    <div style={{ fontSize: "9px", color: "#666" }}>
+                      {srcResults.length} items{lastRun ? ` · ${formatAlertTime(lastRun.startedAt)}` : ""}
+                    </div>
+                  </div>
+                  {onRunScraper && (
+                    <button onClick={() => onRunScraper(src.id)} style={{
+                      padding: "2px 8px", background: "none", border: `1px solid ${src.color}44`,
+                      borderRadius: "4px", color: src.color, cursor: "pointer",
+                      fontSize: "9px", fontFamily: "inherit",
+                    }}>
+                      run
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            {/* Custom scrapers */}
+            {customScrapers.filter((s) => s.enabled).map((src) => (
+              <div key={src.id} style={{
+                display: "flex", alignItems: "center", gap: "10px",
+                padding: "6px 0", borderBottom: "1px solid #12121e",
+              }}>
+                <div style={{ width: "4px", height: "20px", borderRadius: "2px", background: src.color || "#00d4ff", flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: "11px", color: "#e0e0e8" }}>{src.name}</div>
+                  <div style={{ fontSize: "9px", color: "#666" }}>
+                    custom · {src.type}{src.lastRun ? ` · ${formatAlertTime(src.lastRun)}` : ""}
+                  </div>
+                </div>
+                <span style={{ fontSize: "9px", color: "#00d4ff", background: "#00d4ff15", padding: "1px 6px", borderRadius: "4px" }}>custom</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Intelligence Quick Card */}
+        <div style={{
+          flex: "1 1 200px", background: "#0e0e18", border: "1px solid #1a1a2e",
+          borderRadius: "12px", overflow: "hidden",
+        }}>
+          <div style={{
+            padding: "10px 16px", borderBottom: "1px solid #1a1a2e", background: "#0c0c14",
+            fontSize: "10px", color: "#00d4ff", letterSpacing: "2px",
+          }}>
+            INTELLIGENCE
+          </div>
+          <div style={{ padding: "14px 16px" }}>
+            {hasAIKey ? (
+              <div>
+                <div style={{ fontSize: "12px", color: "#e0e0e8", marginBottom: '8px' }}>AI Analysis Ready</div>
+                <div style={{ fontSize: "10px", color: "#888", lineHeight: 1.6, marginBottom: '12px' }}>
+                  {results.length} items across {new Set(results.map((r) => r.source)).size} sources available for analysis.
+                </div>
+                {onNavigate && (
+                  <button onClick={() => onNavigate("intelligence")} style={{
+                    padding: "6px 14px", background: "#00d4ff18", border: "1px solid #00d4ff44",
+                    borderRadius: "6px", color: "#00d4ff", cursor: "pointer",
+                    fontSize: "11px", fontFamily: "inherit", width: "100%",
+                  }}>
+                    Open Intelligence
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: "20px", opacity: 0.3, marginBottom: "8px" }}>&#9889;</div>
+                <div style={{ fontSize: "11px", color: "#666", lineHeight: 1.5, marginBottom: '10px' }}>
+                  Add an API key in Settings to unlock AI-powered intelligence briefings.
+                </div>
+                {onNavigate && (
+                  <button onClick={() => onNavigate("settings")} style={{
+                    padding: "5px 12px", background: "#1a1a2e", border: "1px solid #2a2a3e",
+                    borderRadius: "6px", color: "#888", cursor: "pointer",
+                    fontSize: "10px", fontFamily: "inherit",
+                  }}>
+                    Settings
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Mini sparkline */}
+            {sparklineData.length > 1 && (
+              <div style={{ marginTop: "12px" }}>
+                <div style={{ fontSize: "9px", color: "#555", letterSpacing: "1px", marginBottom: "4px" }}>ACTIVITY</div>
+                <MiniSparkline data={sparklineData} />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Cross-source signals */}
+      {crossSourceItems.length > 0 && (
+        <div style={{
+          background: "#0e0e18", border: "1px solid #1a1a2e", borderRadius: "12px",
+          overflow: "hidden", marginBottom: "24px",
+        }}>
+          <div style={{
+            padding: "10px 16px", borderBottom: "1px solid #1a1a2e", background: "#0c0c14",
+            fontSize: "10px", color: "#ffaa00", letterSpacing: "2px",
+          }}>
+            CROSS-SOURCE SIGNALS
+          </div>
+          <div style={{ padding: "12px 16px" }}>
+            {crossSourceItems.map((cs, i) => (
+              <div key={i} style={{
+                display: "flex", alignItems: "center", gap: "10px",
+                padding: "6px 0", borderBottom: i < crossSourceItems.length - 1 ? "1px solid #12121e" : "none",
+              }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: "12px", color: "#e0e0e8" }}>{cs.title}</div>
+                </div>
+                <div style={{ display: "flex", gap: "4px", flexShrink: 0 }}>
+                  {cs.sources.map((s) => (
+                    <span key={s} style={{
+                      fontSize: "9px", color: SOURCE_COLORS[s] || "#00d4ff",
+                      background: (SOURCE_COLORS[s] || "#00d4ff") + "18",
+                      padding: "1px 6px", borderRadius: "4px",
+                    }}>{s}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Main content: Feed + Sidebar */}
       <div
@@ -145,7 +366,7 @@ export function DashboardTab({
             </h2>
             <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
               {/* Filter buttons */}
-              {FILTERS.map((f) => (
+              {dynamicFilters.map((f) => (
                 <button
                   key={f.id}
                   onClick={() => setActiveFilter(f.id)}
@@ -409,6 +630,25 @@ export function DashboardTab({
         }
       `}</style>
     </div>
+  );
+}
+
+function MiniSparkline({ data, color = "#00ff88" }) {
+  if (!data || data.length < 2) return null;
+  const max = Math.max(...data, 1);
+  const h = 24;
+  const w = 120;
+  const points = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - (v / max) * h;
+    return `${x},${y}`;
+  }).join(" ");
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: "100%", height: `${h}px` }}>
+      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <polyline points={`0,${h} ${points} ${w},${h}`} fill={color + "10"} stroke="none" />
+    </svg>
   );
 }
 

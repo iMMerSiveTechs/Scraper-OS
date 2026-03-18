@@ -2,6 +2,9 @@ import { useState, useMemo, lazy, Suspense } from "react";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useScraperContext } from "../contexts/ScraperContext";
+import { useCustomScrapers } from "../hooks/useCustomScrapers";
+import { useSettings } from "../hooks/useSettings";
+import { useTriggers } from "../hooks/useTriggers";
 import { DEFAULT_SANDBOX_CODE } from "../data/defaultSandboxCode";
 import { TabErrorBoundary } from "./ErrorBoundary";
 import { DataManager } from "./DataManager";
@@ -10,6 +13,10 @@ import { ApproachesTab } from "./tabs/ApproachesTab";
 import { PipelineTab } from "./tabs/PipelineTab";
 import { ProjectsTab } from "./tabs/ProjectsTab";
 import { SandboxTab } from "./tabs/SandboxTab";
+import { BuilderTab } from "./tabs/BuilderTab";
+import { IntelligenceTab } from "./tabs/IntelligenceTab";
+import { SettingsTab } from "./tabs/SettingsTab";
+import { USE_CASES } from "../data/useCases";
 
 const DashboardTab = lazy(() =>
   import("./dashboard/DashboardTab").then((m) => ({ default: m.DashboardTab }))
@@ -17,10 +24,13 @@ const DashboardTab = lazy(() =>
 
 const TABS = [
   { id: "dashboard", label: "Dashboard", shortcut: "1" },
-  { id: "approaches", label: "Approaches", shortcut: "2" },
-  { id: "pipeline", label: "Pipeline", shortcut: "3" },
-  { id: "usecases", label: "Projects", shortcut: "4" },
-  { id: "sandbox", label: "Sandbox", shortcut: "5" },
+  { id: "builder", label: "Builder", shortcut: "2", color: "#00d4ff" },
+  { id: "intelligence", label: "Intelligence", shortcut: "3", color: "#a78bfa" },
+  { id: "approaches", label: "Approaches", shortcut: "4" },
+  { id: "pipeline", label: "Pipeline", shortcut: "5" },
+  { id: "usecases", label: "Projects", shortcut: "6" },
+  { id: "sandbox", label: "Sandbox", shortcut: "7" },
+  { id: "settings", label: "Settings", shortcut: "8" },
 ];
 
 export default function ScrapingPlaybook() {
@@ -30,6 +40,9 @@ export default function ScrapingPlaybook() {
   const [showShortcuts, setShowShortcuts] = useState(false);
 
   const scraper = useScraperContext();
+  const customScrapers = useCustomScrapers();
+  const { settings, updateSetting, updateSettings, resetSettings, hasAIKey } = useSettings();
+  const triggers = useTriggers();
 
   // Persistent state
   const [sandboxCode, setSandboxCode] = useLocalStorage(
@@ -61,16 +74,22 @@ export default function ScrapingPlaybook() {
     []
   );
 
+  // Build project list for Intelligence tab
+  const allProjects = useMemo(() => [...USE_CASES, ...(customProjects || [])], [customProjects]);
+
   // Keyboard shortcuts
   const shortcuts = useMemo(() => [
     { key: "k", meta: true, handler: () => setShowSearch(true) },
     { key: "e", meta: true, handler: () => setShowDataManager(true) },
     { key: "?", handler: () => setShowShortcuts((s) => !s) },
     { key: "1", alt: true, handler: () => setActiveTab("dashboard") },
-    { key: "2", alt: true, handler: () => setActiveTab("approaches") },
-    { key: "3", alt: true, handler: () => setActiveTab("pipeline") },
-    { key: "4", alt: true, handler: () => setActiveTab("usecases") },
-    { key: "5", alt: true, handler: () => setActiveTab("sandbox") },
+    { key: "2", alt: true, handler: () => setActiveTab("builder") },
+    { key: "3", alt: true, handler: () => setActiveTab("intelligence") },
+    { key: "4", alt: true, handler: () => setActiveTab("approaches") },
+    { key: "5", alt: true, handler: () => setActiveTab("pipeline") },
+    { key: "6", alt: true, handler: () => setActiveTab("usecases") },
+    { key: "7", alt: true, handler: () => setActiveTab("sandbox") },
+    { key: "8", alt: true, handler: () => setActiveTab("settings") },
     { key: "Escape", handler: () => { setShowSearch(false); setShowDataManager(false); setShowShortcuts(false); } },
   ], []);
 
@@ -140,6 +159,11 @@ export default function ScrapingPlaybook() {
                   DEMO
                 </span>
               )}
+              {hasAIKey && (
+                <span style={{ fontSize: "9px", color: "#00d4ff", background: "#00d4ff22", padding: "1px 6px", borderRadius: "4px", letterSpacing: "1px" }}>
+                  AI
+                </span>
+              )}
             </div>
             <h1
               style={{
@@ -152,7 +176,7 @@ export default function ScrapingPlaybook() {
                 WebkitTextFillColor: "transparent",
               }}
             >
-              Web Scraping Playbook
+              Scraping Intelligence Platform
             </h1>
           </div>
           <div style={{ display: "flex", gap: "6px", flexShrink: 0, marginTop: "8px" }}>
@@ -195,7 +219,7 @@ export default function ScrapingPlaybook() {
           </div>
         </div>
         <p style={{ color: "#999", fontSize: "13px", marginTop: "6px" }}>
-          Live dashboard · Learn approaches · Build pipelines · Track projects · Export code
+          Build scrapers · AI intelligence · Track projects · Action triggers · Custom analysis
         </p>
       </div>
 
@@ -242,7 +266,7 @@ export default function ScrapingPlaybook() {
             {[
               ["Ctrl+K", "Search"],
               ["Ctrl+E", "Data Manager"],
-              ["Alt+1-5", "Switch tabs"],
+              ["Alt+1-8", "Switch tabs"],
               ["?", "Toggle this help"],
               ["Esc", "Close modals"],
               ["Arrow keys", "Navigate tabs (when focused)"],
@@ -270,47 +294,62 @@ export default function ScrapingPlaybook() {
           overflowX: "auto",
         }}
       >
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            role="tab"
-            id={`tab-${tab.id}`}
-            aria-selected={activeTab === tab.id}
-            aria-controls={`panel-${tab.id}`}
-            tabIndex={activeTab === tab.id ? 0 : -1}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              padding: "12px 20px",
-              background: "none",
-              border: "none",
-              borderBottom:
-                activeTab === tab.id
-                  ? "2px solid #00ff88"
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.id;
+          const tabColor = tab.color || "#00ff88";
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              id={`tab-${tab.id}`}
+              aria-selected={isActive}
+              aria-controls={`panel-${tab.id}`}
+              tabIndex={isActive ? 0 : -1}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: "12px 16px",
+                background: "none",
+                border: "none",
+                borderBottom: isActive
+                  ? `2px solid ${tabColor}`
                   : "2px solid transparent",
-              color: activeTab === tab.id ? "#00ff88" : "#999",
-              cursor: "pointer",
-              fontSize: "12px",
-              fontFamily: "inherit",
-              letterSpacing: "1px",
-              transition: "all 0.2s",
-              whiteSpace: "nowrap",
-              position: "relative",
-            }}
-          >
-            {tab.label}
-            {tab.id === "dashboard" && scraper.alerts.filter((a) => !a.read).length > 0 && (
-              <span style={{
-                position: "absolute",
-                top: "8px",
-                right: "8px",
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: "#ff4444",
-              }} />
-            )}
-          </button>
-        ))}
+                color: isActive ? tabColor : "#999",
+                cursor: "pointer",
+                fontSize: "11px",
+                fontFamily: "inherit",
+                letterSpacing: "1px",
+                transition: "all 0.2s",
+                whiteSpace: "nowrap",
+                position: "relative",
+              }}
+            >
+              {tab.label}
+              {tab.id === "dashboard" && scraper.alerts.filter((a) => !a.read).length > 0 && (
+                <span style={{
+                  position: "absolute",
+                  top: "8px",
+                  right: "4px",
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  background: "#ff4444",
+                }} />
+              )}
+              {tab.id === "builder" && customScrapers.scrapers.length > 0 && (
+                <span style={{
+                  marginLeft: "6px",
+                  fontSize: "9px",
+                  color: "#555",
+                  background: "#1a1a2e",
+                  padding: "1px 5px",
+                  borderRadius: "6px",
+                }}>
+                  {customScrapers.scrapers.length}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab Panels */}
@@ -337,8 +376,22 @@ export default function ScrapingPlaybook() {
                       onRefresh={scraper.runAllScrapers}
                       onRunScraper={scraper.runScraper}
                       onDismissAlert={scraper.dismissAlert}
+                      customScrapers={customScrapers.scrapers}
+                      hasAIKey={hasAIKey}
+                      onNavigate={setActiveTab}
                     />
                   </Suspense>
+                )}
+                {tab.id === "builder" && (
+                  <BuilderTab customScrapers={customScrapers} />
+                )}
+                {tab.id === "intelligence" && (
+                  <IntelligenceTab
+                    results={scraper.results}
+                    settings={settings}
+                    projects={allProjects}
+                    projectNotes={projectNotes}
+                  />
                 )}
                 {tab.id === "approaches" && <ApproachesTab />}
                 {tab.id === "pipeline" && (
@@ -365,6 +418,14 @@ export default function ScrapingPlaybook() {
                   <SandboxTab
                     sandboxCode={sandboxCode}
                     setSandboxCode={setSandboxCode}
+                  />
+                )}
+                {tab.id === "settings" && (
+                  <SettingsTab
+                    settings={settings}
+                    updateSetting={updateSetting}
+                    updateSettings={updateSettings}
+                    triggers={triggers}
                   />
                 )}
               </TabErrorBoundary>

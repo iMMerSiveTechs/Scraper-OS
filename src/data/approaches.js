@@ -8,6 +8,8 @@ export const APPROACHES = [
     coverage: "~40%",
     icon: "\u{1F4C4}",
     color: "#00ff88",
+    setup: "npm install cheerio",
+    whenToUse: "Start here. If the data is in the HTML source, this is fastest.",
     description:
       "Fetch raw HTML, parse the DOM tree, extract data with CSS selectors. No browser needed. Works on server-rendered sites where content exists in the initial HTML response.",
     bestFor: [
@@ -68,6 +70,8 @@ $('article.post').each((i, el) => {
     coverage: "~95%",
     icon: "\u{1F916}",
     color: "#ff6b35",
+    setup: "npm install puppeteer",
+    whenToUse: "Use when content is JS-rendered or requires interaction.",
     description:
       "Launch a headless browser, navigate pages, wait for JS to render, interact with elements, then extract the fully-rendered DOM. The nuclear option \u2014 works on almost everything.",
     bestFor: [
@@ -136,6 +140,8 @@ async function autoScroll(page) {
     coverage: "Varies",
     icon: "\u{1F50D}",
     color: "#a78bfa",
+    setup: "No deps needed (uses built-in fetch)",
+    whenToUse: "Check Network tab first. If you find JSON APIs, skip HTML entirely.",
     description:
       "Open DevTools Network tab, interact with the site, find the XHR/Fetch requests that load data. Call those endpoints directly. Cleanest data, fastest execution, no HTML parsing needed.",
     bestFor: [

@@ -69,7 +69,7 @@ export function ApproachesTab() {
                   background: "#0c0c14",
                 }}
               >
-                {["", "Speed", "Coverage", "Difficulty", "Best For"].map(
+                {["", "Speed", "Coverage", "Difficulty", "Best For", "Fails On", "Setup"].map(
                   (h) => (
                     <th
                       key={h}
@@ -124,6 +124,14 @@ export function ApproachesTab() {
                   </td>
                   <td style={{ padding: "14px 16px", color: "#aaa" }}>
                     {a.bestFor.slice(0, 2).join(", ")}
+                  </td>
+                  <td style={{ padding: "14px 16px", color: "#888", fontSize: "11px" }}>
+                    {a.failsOn.slice(0, 2).join(", ")}
+                  </td>
+                  <td style={{ padding: "14px 16px" }}>
+                    <code style={{ fontSize: "10px", color: "#00ff88", background: "#00ff8810", padding: "2px 6px", borderRadius: "3px" }}>
+                      {a.setup}
+                    </code>
                   </td>
                 </tr>
               ))}

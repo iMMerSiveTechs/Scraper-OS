@@ -40,6 +40,18 @@ export default function ScrapingPlaybook() {
     "scraper-os-pipeline",
     { steps: {}, schedule: "daily" }
   );
+  const [projectSubtasks, setProjectSubtasks] = useLocalStorage(
+    "scraper-os-subtasks",
+    {}
+  );
+  const [projectUrls, setProjectUrls] = useLocalStorage(
+    "scraper-os-urls",
+    {}
+  );
+  const [customProjects, setCustomProjects] = useLocalStorage(
+    "scraper-os-custom-projects",
+    []
+  );
 
   // Keyboard shortcuts
   const shortcuts = useMemo(() => [
@@ -295,6 +307,12 @@ export default function ScrapingPlaybook() {
                     setProjectStatuses={setProjectStatuses}
                     projectNotes={projectNotes}
                     setProjectNotes={setProjectNotes}
+                    projectSubtasks={projectSubtasks}
+                    setProjectSubtasks={setProjectSubtasks}
+                    projectUrls={projectUrls}
+                    setProjectUrls={setProjectUrls}
+                    customProjects={customProjects}
+                    setCustomProjects={setCustomProjects}
                   />
                 )}
                 {tab.id === "sandbox" && (

@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { DEFAULT_SANDBOX_CODE } from "../../data/defaultSandboxCode";
 import { SELECTOR_PATTERNS } from "../../data/selectorPatterns";
 import { CopyButton, DownloadButton } from "../ui";
 import { SelectorTester } from "../SelectorTester";
 import { TemplateLibrary } from "../TemplateLibrary";
+
+const CodeEditor = lazy(() =>
+  import("../CodeEditor").then((m) => ({ default: m.CodeEditor }))
+);
 
 export function SandboxTab({ sandboxCode, setSandboxCode }) {
   const [showTemplates, setShowTemplates] = useState(false);
@@ -120,27 +124,36 @@ export function SandboxTab({ sandboxCode, setSandboxCode }) {
             scraper.mjs
           </span>
         </div>
-        <textarea
-          value={sandboxCode}
-          onChange={(e) => setSandboxCode(e.target.value)}
-          spellCheck={false}
-          aria-label="Scraper code editor"
-          style={{
-            width: "100%",
-            minHeight: "450px",
-            padding: "16px",
-            background: "#080810",
-            border: "none",
-            color: "#c8c8d0",
-            fontSize: "12px",
-            fontFamily:
-              "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
-            lineHeight: 1.6,
-            resize: "vertical",
-            outline: "none",
-            tabSize: 2,
-          }}
-        />
+        <Suspense
+          fallback={
+            <textarea
+              value={sandboxCode}
+              onChange={(e) => setSandboxCode(e.target.value)}
+              spellCheck={false}
+              aria-label="Scraper code editor (loading...)"
+              style={{
+                width: "100%",
+                minHeight: "450px",
+                padding: "16px",
+                background: "#080810",
+                border: "none",
+                color: "#c8c8d0",
+                fontSize: "12px",
+                fontFamily: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
+                lineHeight: 1.6,
+                resize: "vertical",
+                outline: "none",
+                tabSize: 2,
+              }}
+            />
+          }
+        >
+          <CodeEditor
+            value={sandboxCode}
+            onChange={setSandboxCode}
+            minHeight="450px"
+          />
+        </Suspense>
       </div>
 
       {/* Selector Reference */}

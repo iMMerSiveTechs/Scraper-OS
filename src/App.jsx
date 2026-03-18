@@ -1,10 +1,13 @@
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { ScraperProvider } from './contexts/ScraperContext'
 import ScrapingPlaybook from './components/ScrapingPlaybook'
 
 function App() {
   return (
     <ErrorBoundary>
-      <ScrapingPlaybook />
+      <ScraperProvider>
+        <ScrapingPlaybook />
+      </ScraperProvider>
     </ErrorBoundary>
   )
 }

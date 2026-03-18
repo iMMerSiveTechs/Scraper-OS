@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
+import { useScraperContext } from "../contexts/ScraperContext";
 import { DEFAULT_SANDBOX_CODE } from "../data/defaultSandboxCode";
 import { TabErrorBoundary } from "./ErrorBoundary";
 import { DataManager } from "./DataManager";
@@ -10,18 +11,25 @@ import { PipelineTab } from "./tabs/PipelineTab";
 import { ProjectsTab } from "./tabs/ProjectsTab";
 import { SandboxTab } from "./tabs/SandboxTab";
 
+const DashboardTab = lazy(() =>
+  import("./dashboard/DashboardTab").then((m) => ({ default: m.DashboardTab }))
+);
+
 const TABS = [
-  { id: "approaches", label: "Approaches", shortcut: "1" },
-  { id: "pipeline", label: "Pipeline", shortcut: "2" },
-  { id: "usecases", label: "Projects", shortcut: "3" },
-  { id: "sandbox", label: "Sandbox", shortcut: "4" },
+  { id: "dashboard", label: "Dashboard", shortcut: "1" },
+  { id: "approaches", label: "Approaches", shortcut: "2" },
+  { id: "pipeline", label: "Pipeline", shortcut: "3" },
+  { id: "usecases", label: "Projects", shortcut: "4" },
+  { id: "sandbox", label: "Sandbox", shortcut: "5" },
 ];
 
 export default function ScrapingPlaybook() {
-  const [activeTab, setActiveTab] = useState("approaches");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [showDataManager, setShowDataManager] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+
+  const scraper = useScraperContext();
 
   // Persistent state
   const [sandboxCode, setSandboxCode] = useLocalStorage(
@@ -58,10 +66,11 @@ export default function ScrapingPlaybook() {
     { key: "k", meta: true, handler: () => setShowSearch(true) },
     { key: "e", meta: true, handler: () => setShowDataManager(true) },
     { key: "?", handler: () => setShowShortcuts((s) => !s) },
-    { key: "1", alt: true, handler: () => setActiveTab("approaches") },
-    { key: "2", alt: true, handler: () => setActiveTab("pipeline") },
-    { key: "3", alt: true, handler: () => setActiveTab("usecases") },
-    { key: "4", alt: true, handler: () => setActiveTab("sandbox") },
+    { key: "1", alt: true, handler: () => setActiveTab("dashboard") },
+    { key: "2", alt: true, handler: () => setActiveTab("approaches") },
+    { key: "3", alt: true, handler: () => setActiveTab("pipeline") },
+    { key: "4", alt: true, handler: () => setActiveTab("usecases") },
+    { key: "5", alt: true, handler: () => setActiveTab("sandbox") },
     { key: "Escape", handler: () => { setShowSearch(false); setShowDataManager(false); setShowShortcuts(false); } },
   ], []);
 
@@ -111,35 +120,42 @@ export default function ScrapingPlaybook() {
           background: "linear-gradient(180deg, #0f0f1a 0%, #0a0a0f 100%)",
         }}
       >
-        <div
-          style={{
-            fontSize: "11px",
-            letterSpacing: "4px",
-            color: "#00ff88",
-            textTransform: "uppercase",
-            marginBottom: "8px",
-          }}
-        >
-          Scraper OS
-        </div>
-        <h1
-          style={{
-            fontSize: "28px",
-            fontWeight: 700,
-            margin: 0,
-            fontFamily: "'Space Grotesk', sans-serif",
-            background: "linear-gradient(135deg, #fff 0%, #888 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          Web Scraping Playbook
-        </h1>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "6px", gap: "8px" }}>
-          <p style={{ color: "#999", fontSize: "13px", margin: 0 }}>
-            Learn approaches · Build pipelines · Track projects · Export code
-          </p>
-          <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <div
+              style={{
+                fontSize: "11px",
+                letterSpacing: "4px",
+                color: "#00ff88",
+                textTransform: "uppercase",
+                marginBottom: "8px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              Scraper OS
+              {scraper.isDemo && (
+                <span style={{ fontSize: "9px", color: "#ffaa00", background: "#ffaa0022", padding: "1px 6px", borderRadius: "4px", letterSpacing: "1px" }}>
+                  DEMO
+                </span>
+              )}
+            </div>
+            <h1
+              style={{
+                fontSize: "28px",
+                fontWeight: 700,
+                margin: 0,
+                fontFamily: "'Space Grotesk', sans-serif",
+                background: "linear-gradient(135deg, #fff 0%, #888 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              Web Scraping Playbook
+            </h1>
+          </div>
+          <div style={{ display: "flex", gap: "6px", flexShrink: 0, marginTop: "8px" }}>
             <button
               onClick={() => setShowSearch(true)}
               aria-label="Search (Ctrl+K)"
@@ -178,6 +194,9 @@ export default function ScrapingPlaybook() {
             </button>
           </div>
         </div>
+        <p style={{ color: "#999", fontSize: "13px", marginTop: "6px" }}>
+          Live dashboard · Learn approaches · Build pipelines · Track projects · Export code
+        </p>
       </div>
 
       {/* Modals */}
@@ -223,7 +242,7 @@ export default function ScrapingPlaybook() {
             {[
               ["Ctrl+K", "Search"],
               ["Ctrl+E", "Data Manager"],
-              ["Alt+1-4", "Switch tabs"],
+              ["Alt+1-5", "Switch tabs"],
               ["?", "Toggle this help"],
               ["Esc", "Close modals"],
               ["Arrow keys", "Navigate tabs (when focused)"],
@@ -275,15 +294,27 @@ export default function ScrapingPlaybook() {
               letterSpacing: "1px",
               transition: "all 0.2s",
               whiteSpace: "nowrap",
+              position: "relative",
             }}
           >
             {tab.label}
+            {tab.id === "dashboard" && scraper.alerts.filter((a) => !a.read).length > 0 && (
+              <span style={{
+                position: "absolute",
+                top: "8px",
+                right: "8px",
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "#ff4444",
+              }} />
+            )}
           </button>
         ))}
       </div>
 
       {/* Tab Panels */}
-      <div style={{ padding: "24px", maxWidth: "1100px", margin: "0 auto" }}>
+      <div style={{ padding: "24px", maxWidth: "1200px", margin: "0 auto" }}>
         {TABS.map((tab) => (
           <div
             key={tab.id}
@@ -294,6 +325,21 @@ export default function ScrapingPlaybook() {
           >
             {activeTab === tab.id && (
               <TabErrorBoundary>
+                {tab.id === "dashboard" && (
+                  <Suspense fallback={<div style={{ color: "#555", fontSize: "13px", padding: "40px 0", textAlign: "center" }}>Loading dashboard...</div>}>
+                    <DashboardTab
+                      runs={scraper.runs}
+                      results={scraper.results}
+                      alerts={scraper.alerts}
+                      stats={scraper.stats}
+                      isDemo={scraper.isDemo}
+                      loading={scraper.loading}
+                      onRefresh={scraper.runAllScrapers}
+                      onRunScraper={scraper.runScraper}
+                      onDismissAlert={scraper.dismissAlert}
+                    />
+                  </Suspense>
+                )}
                 {tab.id === "approaches" && <ApproachesTab />}
                 {tab.id === "pipeline" && (
                   <PipelineTab

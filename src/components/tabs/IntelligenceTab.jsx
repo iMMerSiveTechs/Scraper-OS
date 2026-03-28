@@ -18,7 +18,7 @@ const PRIORITY_COLORS = {
   low: '#888',
 };
 
-export function IntelligenceTab({ results, settings, projects, projectNotes }) {
+export function IntelligenceTab({ results, settings, projects, projectNotes, onNavigate }) {
   const [activeSection, setActiveSection] = useState('briefing');
   const [digest, setDigest] = useState(null);
   const [projectBrief, setProjectBrief] = useState(null);
@@ -95,7 +95,7 @@ export function IntelligenceTab({ results, settings, projects, projectNotes }) {
 
   // No API key state
   if (!hasKey) {
-    return <NoKeyState />;
+    return <NoKeyState onNavigate={onNavigate} />;
   }
 
   return (
@@ -597,7 +597,7 @@ function DigestCard({ title, color = '#888', children, style: extraStyle }) {
   );
 }
 
-function NoKeyState() {
+function NoKeyState({ onNavigate }) {
   return (
     <div style={{
       padding: '60px 24px', textAlign: 'center',
@@ -610,6 +610,15 @@ function NoKeyState() {
       <div style={{ fontSize: '12px', color: '#888', marginBottom: '20px', lineHeight: 1.7, maxWidth: '400px', margin: '0 auto 20px' }}>
         Add your OpenAI or Anthropic API key in <span style={{ color: '#00d4ff' }}>Settings</span> to unlock AI-powered analysis: daily briefings, project synthesis, trend detection, and custom queries.
       </div>
+      {onNavigate && (
+        <button onClick={() => onNavigate('settings')} style={{
+          padding: '8px 20px', background: '#00d4ff18', border: '1px solid #00d4ff44',
+          borderRadius: '6px', color: '#00d4ff', cursor: 'pointer',
+          fontSize: '12px', fontFamily: 'inherit', marginBottom: '16px',
+        }}>
+          Go to Settings
+        </button>
+      )}
       <div style={{ fontSize: '11px', color: '#555', lineHeight: 1.6 }}>
         BYOK (Bring Your Own Key) — your data stays between you and your AI provider.
         <br />The Signal Map section works without a key.

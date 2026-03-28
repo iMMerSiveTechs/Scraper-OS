@@ -77,7 +77,7 @@ export function FeedItem({ source, title, url, timestamp, tags }) {
         {/* Content */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <a
-            href={url}
+            href={url || '#'}
             target="_blank"
             rel="noopener noreferrer"
             style={{

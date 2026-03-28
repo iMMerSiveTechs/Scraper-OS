@@ -40,9 +40,9 @@ const EMPTY_CONFIG = {
   color: '#00d4ff',
 };
 
-export function BuilderTab({ customScrapers, fileIngestion }) {
+export function BuilderTab({ customScrapers = {}, fileIngestion }) {
   const {
-    scrapers, testResults, testing,
+    scrapers = [], testResults = {}, testing = {},
     addScraper, updateScraper, removeScraper, toggleScraper,
     testScraper, duplicateScraper,
   } = customScrapers;

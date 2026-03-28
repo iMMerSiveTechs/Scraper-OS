@@ -15,7 +15,7 @@ const ACTION_TYPES = [
   { value: 'digest', label: 'Include in Digest' },
 ];
 
-export function SettingsTab({ settings, updateSetting, updateSettings, triggers }) {
+export function SettingsTab({ settings, updateSetting, updateSettings, resetSettings, triggers }) {
   const [showKey, setShowKey] = useState({});
   const [validating, setValidating] = useState({});
   const [validationResult, setValidationResult] = useState({});
@@ -310,6 +310,21 @@ export function SettingsTab({ settings, updateSetting, updateSettings, triggers 
             onChange={(v) => updateSetting('showSparklines', v)}
           />
         </div>
+
+        {resetSettings && (
+          <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #1a1a2e' }}>
+            <button
+              onClick={() => { if (confirm('Reset all settings to defaults?')) resetSettings(); }}
+              style={{
+                padding: '6px 14px', background: '#ff444418', border: '1px solid #ff444433',
+                borderRadius: '6px', color: '#ff4444', cursor: 'pointer',
+                fontSize: '11px', fontFamily: 'inherit',
+              }}
+            >
+              Reset All Settings
+            </button>
+          </div>
+        )}
       </SettingsCard>
     </div>
   );

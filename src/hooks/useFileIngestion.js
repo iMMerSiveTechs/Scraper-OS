@@ -207,7 +207,8 @@ export function useFileIngestion() {
       }
     };
     es.onerror = () => {
-      setWatching(false);
+      stopWatching();
+      setServerOnline(false);
     };
 
     eventSourceRef.current = es;

@@ -398,6 +398,7 @@ export default function ScrapingPlaybook() {
                     settings={settings}
                     projects={allProjects}
                     projectNotes={projectNotes}
+                    onNavigate={setActiveTab}
                   />
                 )}
                 {tab.id === "approaches" && <ApproachesTab />}
@@ -432,6 +433,7 @@ export default function ScrapingPlaybook() {
                     settings={settings}
                     updateSetting={updateSetting}
                     updateSettings={updateSettings}
+                    resetSettings={resetSettings}
                     triggers={triggers}
                   />
                 )}

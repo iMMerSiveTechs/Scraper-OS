@@ -45,6 +45,11 @@ export function DashboardTab({
 }) {
   const [activeFilter, setActiveFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
+  const [runningScraper, setRunningScraper] = useState(null);
+  const [runResult, setRunResult] = useState(null);
+  const [onboarded, setOnboarded] = useState(() => {
+    try { return localStorage.getItem("scraper-os-onboarded") === "1"; } catch { return false; }
+  });
 
   // Build dynamic filter list based on sources present in results
   const dynamicFilters = useMemo(() => {
@@ -118,8 +123,77 @@ export function DashboardTab({
     }
   };
 
+  const handleRunSingle = async (scraperId) => {
+    if (!onRunScraper || runningScraper) return;
+    setRunningScraper(scraperId);
+    setRunResult(null);
+    try {
+      await onRunScraper(scraperId);
+      setRunResult({ id: scraperId, ok: true });
+    } catch (err) {
+      setRunResult({ id: scraperId, ok: false, error: err.message });
+    }
+    setRunningScraper(null);
+    setTimeout(() => setRunResult(null), 3000);
+  };
+
+  const dismissOnboarding = () => {
+    setOnboarded(true);
+    try { localStorage.setItem("scraper-os-onboarded", "1"); } catch { /* */ }
+  };
+
+  // Onboarding step checks
+  const hasResults = results.length > 0 && results.some((r) => !r.id?.startsWith("hn-0") && !r.id?.startsWith("gh-0") && !r.id?.startsWith("ph-0") && !r.id?.startsWith("rd-0") && !r.id?.startsWith("x-0") && !r.id?.startsWith("taaft-0") && !r.id?.startsWith("file-0"));
+
   return (
     <div aria-label="Dashboard" role="region">
+      {/* Getting Started */}
+      {!onboarded && (
+        <div style={{
+          background: "#0e0e18", border: "1px solid #00ff8833", borderRadius: "12px",
+          overflow: "hidden", marginBottom: "20px",
+        }}>
+          <div style={{
+            padding: "12px 16px", borderBottom: "1px solid #1a1a2e", background: "#0c0c14",
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+          }}>
+            <span style={{ fontSize: "10px", color: "#00ff88", letterSpacing: "2px" }}>GETTING STARTED</span>
+            <button onClick={dismissOnboarding} style={{
+              background: "none", border: "none", color: "#555", cursor: "pointer",
+              fontSize: "12px", fontFamily: "inherit",
+            }}>dismiss</button>
+          </div>
+          <div style={{ padding: "14px 16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+            {[
+              { done: hasResults, label: "Run your first scrape", desc: 'Click "run" on any scraper in Source Manager below', action: null },
+              { done: hasAIKey, label: "Unlock AI Intelligence", desc: "Add an OpenAI or Anthropic API key", action: () => onNavigate?.("settings") },
+              { done: customScrapers.length > 0, label: "Build a custom scraper", desc: "Create scrapers with CSS selectors, JSON paths, or RSS", action: () => onNavigate?.("builder") },
+              { done: false, label: "Ingest local files", desc: "Drag files into Builder tab or scan a directory", action: () => onNavigate?.("builder") },
+            ].map((step, i) => (
+              <div key={i} style={{
+                display: "flex", gap: "10px", padding: "10px 12px",
+                background: "#0a0a0f", borderRadius: "8px", cursor: step.action ? "pointer" : "default",
+              }} onClick={step.action}>
+                <span style={{
+                  width: "18px", height: "18px", borderRadius: "50%", flexShrink: 0,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: step.done ? "#00ff8822" : "#1a1a2e",
+                  border: `1px solid ${step.done ? "#00ff8844" : "#2a2a3e"}`,
+                  color: step.done ? "#00ff88" : "#555",
+                  fontSize: "10px",
+                }}>
+                  {step.done ? "\u2713" : i + 1}
+                </span>
+                <div>
+                  <div style={{ fontSize: "12px", color: step.done ? "#00ff88" : "#e0e0e8", fontWeight: 500 }}>{step.label}</div>
+                  <div style={{ fontSize: "10px", color: "#666", marginTop: "2px" }}>{step.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Demo badge */}
       {isDemo && (
         <div
@@ -224,12 +298,30 @@ export function DashboardTab({
                     </div>
                   </div>
                   {onRunScraper && (
-                    <button onClick={() => onRunScraper(src.id)} style={{
-                      padding: "2px 8px", background: "none", border: `1px solid ${src.color}44`,
-                      borderRadius: "4px", color: src.color, cursor: "pointer",
-                      fontSize: "9px", fontFamily: "inherit",
-                    }}>
-                      run
+                    <button
+                      onClick={() => handleRunSingle(src.id)}
+                      disabled={runningScraper === src.id}
+                      style={{
+                        padding: "2px 8px",
+                        background: runResult?.id === src.id
+                          ? (runResult.ok ? "#00ff8818" : "#ff444418")
+                          : runningScraper === src.id ? "#1a1a2e" : "none",
+                        border: `1px solid ${
+                          runResult?.id === src.id
+                            ? (runResult.ok ? "#00ff8844" : "#ff444444")
+                            : src.color + "44"
+                        }`,
+                        borderRadius: "4px",
+                        color: runResult?.id === src.id
+                          ? (runResult.ok ? "#00ff88" : "#ff4444")
+                          : runningScraper === src.id ? "#888" : src.color,
+                        cursor: runningScraper === src.id ? "not-allowed" : "pointer",
+                        fontSize: "9px", fontFamily: "inherit",
+                        transition: "all 0.2s",
+                        animation: runningScraper === src.id ? "pulse 1.5s ease-in-out infinite" : "none",
+                      }}
+                    >
+                      {runningScraper === src.id ? "..." : runResult?.id === src.id ? (runResult.ok ? "\u2713 done" : "\u2717 err") : "run"}
                     </button>
                   )}
                 </div>

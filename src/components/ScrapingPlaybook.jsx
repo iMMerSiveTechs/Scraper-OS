@@ -6,6 +6,7 @@ import { useCustomScrapers } from "../hooks/useCustomScrapers";
 import { useSettings } from "../hooks/useSettings";
 import { useTriggers } from "../hooks/useTriggers";
 import { useFileIngestion } from "../hooks/useFileIngestion";
+import { useServerStatus } from "../hooks/useServerStatus";
 import { DEFAULT_SANDBOX_CODE } from "../data/defaultSandboxCode";
 import { TabErrorBoundary } from "./ErrorBoundary";
 import { DataManager } from "./DataManager";
@@ -45,6 +46,7 @@ export default function ScrapingPlaybook() {
   const { settings, updateSetting, updateSettings, resetSettings, hasAIKey } = useSettings();
   const triggers = useTriggers();
   const fileIngestion = useFileIngestion();
+  const serverStatus = useServerStatus();
 
   // Merge file-ingested items into results for intelligence
   const allResults = useMemo(() => {
@@ -180,6 +182,15 @@ export default function ScrapingPlaybook() {
                   AI
                 </span>
               )}
+              <span
+                title={serverStatus.online ? "Server online — all scrapers available" : "Server offline — run: npm run dev"}
+                style={{
+                  width: "7px", height: "7px", borderRadius: "50%",
+                  background: serverStatus.online ? "#00ff88" : "#ff4444",
+                  display: "inline-block", marginLeft: "2px",
+                  boxShadow: serverStatus.online ? "0 0 6px #00ff8866" : "none",
+                }}
+              />
             </div>
             <h1
               style={{
@@ -235,7 +246,16 @@ export default function ScrapingPlaybook() {
           </div>
         </div>
         <p style={{ color: "#999", fontSize: "13px", marginTop: "6px" }}>
-          Build scrapers · AI intelligence · Track projects · Action triggers · Custom analysis
+          {scraper.results.length === 0 && scraper.isDemo
+            ? 'Click "run" on any scraper below to get started'
+            : !hasAIKey
+              ? 'Add an API key in Settings to unlock AI-powered intelligence'
+              : 'Build scrapers · AI intelligence · Track projects · Action triggers'}
+          {!serverStatus.online && (
+            <span style={{ color: "#ff6b6b", marginLeft: "8px", fontSize: "11px" }}>
+              · Server offline
+            </span>
+          )}
         </p>
       </div>
 

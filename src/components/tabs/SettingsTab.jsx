@@ -38,7 +38,7 @@ export function SettingsTab({ settings, updateSetting, updateSettings, resetSett
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* AI API Keys */}
-      <SettingsCard title="AI API KEYS" color="#00d4ff" subtitle="BYOK — Bring Your Own Key. Keys are stored locally in your browser.">
+      <SettingsCard title="AI API KEYS" color="#00d4ff" subtitle={<span>BYOK — Keys stored locally. <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: '#00d4ff' }}>Get OpenAI key</a> · <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" style={{ color: '#00d4ff' }}>Get Anthropic key</a></span>}>
         <KeyInput
           label="OpenAI API Key"
           value={settings.openaiKey}
@@ -201,6 +201,7 @@ export function SettingsTab({ settings, updateSetting, updateSettings, resetSett
             placeholder="programming, webdev, machinelearning"
             style={inputStyle}
           />
+          <div style={{ fontSize: '10px', color: '#555', marginTop: '4px' }}>Popular: programming, webdev, machinelearning, startups, datascience, artificial</div>
           <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
             {['hot', 'new', 'top', 'rising'].map((s) => (
               <button key={s} onClick={() => updateSetting('redditSort', s)} style={{
@@ -225,6 +226,7 @@ export function SettingsTab({ settings, updateSetting, updateSettings, resetSett
             placeholder="openai, elonmusk, anthropic"
             style={inputStyle}
           />
+          <div style={{ fontSize: '10px', color: '#555', marginTop: '4px' }}>Enter handles without @. Uses free RSS bridges — no API key needed.</div>
           <div style={{ marginTop: '6px' }}>
             <FieldLabel>Search terms</FieldLabel>
             <input

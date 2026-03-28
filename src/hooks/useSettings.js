@@ -21,6 +21,18 @@ const DEFAULT_SETTINGS = {
   retentionDays: 30,
   maxResults: 500,
 
+  // Reddit
+  redditSubreddits: [],
+  redditSort: 'hot',
+
+  // X / Twitter
+  xUsernames: [],
+  xSearchTerms: [],
+  xBearerToken: '',
+
+  // TAAFT
+  taaftQuery: '',
+
   // UI
   compactFeed: false,
   showSparklines: true,

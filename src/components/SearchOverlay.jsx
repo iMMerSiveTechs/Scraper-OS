@@ -4,9 +4,41 @@ import { PIPELINE_STEPS } from "../data/pipeline";
 import { USE_CASES } from "../data/useCases";
 import { SELECTOR_PATTERNS } from "../data/selectorPatterns";
 import { TEMPLATES } from "../data/templates";
+import { SCRAPERS } from "../scrapers/index";
 
 function buildSearchIndex() {
   const items = [];
+
+  // Scrapers
+  Object.entries(SCRAPERS).forEach(([id, entry]) => {
+    items.push({ type: "Scraper", name: entry.name, desc: `Built-in ${entry.schedule} scraper`, tab: "dashboard", id });
+  });
+
+  // Tabs
+  [
+    { name: "Dashboard", desc: "Live feed, stats, source manager, alerts", tab: "dashboard" },
+    { name: "Builder", desc: "Create custom scrapers and ingest files", tab: "builder" },
+    { name: "Intelligence", desc: "AI-powered briefings, project synthesis, signal map", tab: "intelligence" },
+    { name: "Approaches", desc: "Scraping methods: static, browser, API", tab: "approaches" },
+    { name: "Pipeline", desc: "Build multi-step scraping pipelines", tab: "pipeline" },
+    { name: "Projects", desc: "Track scraping projects with subtasks", tab: "usecases" },
+    { name: "Sandbox", desc: "Code editor with templates", tab: "sandbox" },
+    { name: "Settings", desc: "API keys, triggers, notifications, scraper config", tab: "settings" },
+  ].forEach((t) => {
+    items.push({ type: "Tab", name: t.name, desc: t.desc, tab: t.tab, id: t.tab });
+  });
+
+  // Settings shortcuts
+  [
+    { name: "API Keys", desc: "OpenAI and Anthropic API key management", tab: "settings" },
+    { name: "Reddit Config", desc: "Subreddits, sort order, time range", tab: "settings" },
+    { name: "X / Twitter Config", desc: "Usernames, search terms, RSS bridges", tab: "settings" },
+    { name: "TAAFT Config", desc: "AI tool search and categories", tab: "settings" },
+    { name: "Action Triggers", desc: "Keyword alerts, score thresholds, webhooks", tab: "settings" },
+    { name: "Notifications", desc: "Browser notifications and webhook URLs", tab: "settings" },
+  ].forEach((s) => {
+    items.push({ type: "Setting", name: s.name, desc: s.desc, tab: s.tab, id: `setting-${s.name}` });
+  });
 
   APPROACHES.forEach((a) => {
     items.push({ type: "Approach", name: a.title, desc: a.description, tab: "approaches", id: a.id });
@@ -46,6 +78,9 @@ function scoreMatch(item, query) {
 }
 
 const TYPE_COLORS = {
+  Scraper: "#00ff88",
+  Tab: "#00d4ff",
+  Setting: "#ffaa00",
   Approach: "#00ff88",
   Pipeline: "#a78bfa",
   Project: "#ff6b35",
@@ -110,7 +145,7 @@ export function SearchOverlay({ onClose, onNavigate }) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search approaches, templates, selectors..."
+            placeholder="Search scrapers, tabs, settings, templates..."
             onKeyDown={(e) => {
               if (e.key === "Escape") onClose();
               if (e.key === "Enter" && results.length > 0) handleSelect(results[0]);

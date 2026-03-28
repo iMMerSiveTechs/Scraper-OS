@@ -1,4 +1,4 @@
-import { useState, useMemo, lazy, Suspense } from "react";
+import { useState, useMemo, useEffect, useRef, lazy, Suspense } from "react";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useScraperContext } from "../contexts/ScraperContext";
@@ -50,6 +50,15 @@ export default function ScrapingPlaybook() {
   const allResults = useMemo(() => {
     return [...scraper.results, ...fileIngestion.ingestedItems];
   }, [scraper.results, fileIngestion.ingestedItems]);
+
+  // Evaluate triggers when new results arrive
+  const prevResultsLenRef = useRef(scraper.results.length);
+  useEffect(() => {
+    if (scraper.results.length > prevResultsLenRef.current && triggers.triggers.length > 0) {
+      triggers.evaluate(scraper.results);
+    }
+    prevResultsLenRef.current = scraper.results.length;
+  }, [scraper.results.length, triggers]);
 
   // Persistent state
   const [sandboxCode, setSandboxCode] = useLocalStorage(

@@ -3,12 +3,15 @@ import { StatCard } from "./StatCard";
 import { FeedItem } from "./FeedItem";
 import { RunStatus } from "./RunStatus";
 
-const FILTERS = [
-  { id: "all", label: "All" },
-  { id: "hn", label: "HN" },
-  { id: "github", label: "GitHub" },
-  { id: "producthunt", label: "ProductHunt" },
-];
+const SOURCE_LABELS = {
+  hn: "HN",
+  github: "GitHub",
+  producthunt: "ProductHunt",
+  reddit: "Reddit",
+  x: "X",
+  taaft: "TAAFT",
+  file: "Files",
+};
 
 const ALERT_COLORS = {
   error: { color: "#ff4444", bg: "#ff444418", border: "#ff444433" },
@@ -47,13 +50,22 @@ export function DashboardTab({
   const dynamicFilters = useMemo(() => {
     const sources = new Set(results.map((r) => r.source));
     const base = [{ id: "all", label: "All" }];
-    for (const f of FILTERS.slice(1)) {
-      if (sources.has(f.id)) base.push(f);
+    // Add known sources present in results
+    for (const src of sources) {
+      if (SOURCE_LABELS[src]) {
+        base.push({ id: src, label: SOURCE_LABELS[src] });
+      }
     }
     // Add custom scraper sources
     for (const s of customScrapers) {
-      if (sources.has(s.id) || sources.has(s.name)) {
+      if ((sources.has(s.id) || sources.has(s.name)) && !base.some((b) => b.id === s.id)) {
         base.push({ id: s.id, label: s.name.slice(0, 12) });
+      }
+    }
+    // Add any unknown sources
+    for (const src of sources) {
+      if (!base.some((b) => b.id === src)) {
+        base.push({ id: src, label: src.slice(0, 12) });
       }
     }
     return base;

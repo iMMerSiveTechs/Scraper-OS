@@ -143,6 +143,10 @@ export function DataManager({ onClose }) {
                 {importPreview.stats.projects > 0 && <div>{importPreview.stats.projects} project statuses</div>}
                 {importPreview.stats.hasNotes && <div>Project notes</div>}
                 {importPreview.stats.hasPipeline && <div>Pipeline config</div>}
+                {importPreview.stats.hasSettings && <div>Settings & API keys</div>}
+                {importPreview.stats.customScrapers > 0 && <div>{importPreview.stats.customScrapers} custom scrapers</div>}
+                {importPreview.stats.hasTriggers && <div>Action triggers</div>}
+                {importPreview.stats.ingestedItems > 0 && <div>{importPreview.stats.ingestedItems} ingested items</div>}
               </div>
               <button
                 onClick={handleImport}

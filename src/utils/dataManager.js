@@ -43,6 +43,10 @@ export function validateImport(json) {
       hasSandbox: !!json["scraper-os-sandbox"],
       hasPipeline: !!json["scraper-os-pipeline"],
       hasNotes: !!json["scraper-os-notes"],
+      hasSettings: !!json["scraper-os-settings"],
+      customScrapers: json["scraper-os-custom-scrapers"]?.length || 0,
+      hasTriggers: !!json["scraper-os-triggers"],
+      ingestedItems: json["scraper-os-ingested"]?.length || 0,
     },
   };
 }

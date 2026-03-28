@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { FileIngestion } from '../FileIngestion';
 
 const SCRAPER_TYPES = [
   { id: 'css', label: 'CSS / HTML', color: '#00ff88', desc: 'Parse HTML with CSS selectors' },
@@ -39,7 +40,7 @@ const EMPTY_CONFIG = {
   color: '#00d4ff',
 };
 
-export function BuilderTab({ customScrapers }) {
+export function BuilderTab({ customScrapers, fileIngestion }) {
   const {
     scrapers, testResults, testing,
     addScraper, updateScraper, removeScraper, toggleScraper,
@@ -164,6 +165,13 @@ export function BuilderTab({ customScrapers }) {
                 onTest={() => testScraper(s.id)}
               />
             ))}
+          </div>
+        )}
+
+        {/* File Ingestion */}
+        {fileIngestion && (
+          <div style={{ marginTop: '20px' }}>
+            <FileIngestion fileIngestion={fileIngestion} />
           </div>
         )}
       </div>

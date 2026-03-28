@@ -12,11 +12,29 @@ const CORS_PROXIES = [
 ];
 
 /**
- * Attempt to fetch a URL, trying CORS proxies if direct fetch fails.
+ * Attempt to fetch a URL. Tries local server proxy first (if available),
+ * then direct fetch, then CORS proxies.
  */
 async function fetchWithProxy(url, timeout = 10000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
+
+  // Try local server proxy first (bypasses CORS entirely)
+  try {
+    const serverRes = await fetch('/api/scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, timeout }),
+      signal: AbortSignal.timeout(3000),
+    });
+    if (serverRes.ok) {
+      const { data } = await serverRes.json();
+      clearTimeout(timer);
+      return data;
+    }
+  } catch {
+    // Server not available, fall through
+  }
 
   // Try direct first
   try {

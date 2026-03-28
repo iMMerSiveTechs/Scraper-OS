@@ -188,6 +188,9 @@ export function DashboardTab({
               { id: "hn", name: "Hacker News", color: "#ff6b35" },
               { id: "github", name: "GitHub Trending", color: "#a78bfa" },
               { id: "producthunt", name: "Product Hunt", color: "#da552f" },
+              { id: "reddit", name: "Reddit", color: "#ff4500" },
+              { id: "x", name: "X / Twitter", color: "#1da1f2" },
+              { id: "taaft", name: "TAAFT", color: "#6366f1" },
             ].map((src) => {
               const srcResults = results.filter((r) => r.source === src.id);
               const lastRun = runs.find((r) => r.scraperId === src.id);

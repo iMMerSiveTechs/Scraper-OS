@@ -7,10 +7,16 @@
 import { scrapeHN } from './hn.js';
 import { scrapeGitHubTrending } from './github.js';
 import { scrapeProductHunt } from './producthunt.js';
+import { scrapeReddit } from './reddit.js';
+import { scrapeX } from './x.js';
+import { scrapeTAAFT } from './taaft.js';
 
 export { scrapeHN } from './hn.js';
 export { scrapeGitHubTrending } from './github.js';
 export { scrapeProductHunt } from './producthunt.js';
+export { scrapeReddit } from './reddit.js';
+export { scrapeX } from './x.js';
+export { scrapeTAAFT } from './taaft.js';
 
 /**
  * Registry of all scrapers.
@@ -38,6 +44,30 @@ export const SCRAPERS = {
     fn: scrapeProductHunt,
     icon: '\uD83D\uDC31',
     color: '#da552f',
+    canRunInBrowser: false,
+    schedule: 'daily',
+  },
+  reddit: {
+    name: 'Reddit',
+    fn: scrapeReddit,
+    icon: '\uD83E\uDD16',
+    color: '#ff4500',
+    canRunInBrowser: true,
+    schedule: 'hourly',
+  },
+  x: {
+    name: 'X / Twitter',
+    fn: scrapeX,
+    icon: '\uD835\uDD4F',
+    color: '#1da1f2',
+    canRunInBrowser: false,
+    schedule: 'hourly',
+  },
+  taaft: {
+    name: 'TAAFT',
+    fn: scrapeTAAFT,
+    icon: '\uD83E\uDD16',
+    color: '#6366f1',
     canRunInBrowser: false,
     schedule: 'daily',
   },

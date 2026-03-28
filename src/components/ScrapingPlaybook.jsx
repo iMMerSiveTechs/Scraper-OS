@@ -5,6 +5,7 @@ import { useScraperContext } from "../contexts/ScraperContext";
 import { useCustomScrapers } from "../hooks/useCustomScrapers";
 import { useSettings } from "../hooks/useSettings";
 import { useTriggers } from "../hooks/useTriggers";
+import { useFileIngestion } from "../hooks/useFileIngestion";
 import { DEFAULT_SANDBOX_CODE } from "../data/defaultSandboxCode";
 import { TabErrorBoundary } from "./ErrorBoundary";
 import { DataManager } from "./DataManager";
@@ -43,6 +44,12 @@ export default function ScrapingPlaybook() {
   const customScrapers = useCustomScrapers();
   const { settings, updateSetting, updateSettings, resetSettings, hasAIKey } = useSettings();
   const triggers = useTriggers();
+  const fileIngestion = useFileIngestion();
+
+  // Merge file-ingested items into results for intelligence
+  const allResults = useMemo(() => {
+    return [...scraper.results, ...fileIngestion.ingestedItems];
+  }, [scraper.results, fileIngestion.ingestedItems]);
 
   // Persistent state
   const [sandboxCode, setSandboxCode] = useLocalStorage(
@@ -383,11 +390,11 @@ export default function ScrapingPlaybook() {
                   </Suspense>
                 )}
                 {tab.id === "builder" && (
-                  <BuilderTab customScrapers={customScrapers} />
+                  <BuilderTab customScrapers={customScrapers} fileIngestion={fileIngestion} />
                 )}
                 {tab.id === "intelligence" && (
                   <IntelligenceTab
-                    results={scraper.results}
+                    results={allResults}
                     settings={settings}
                     projects={allProjects}
                     projectNotes={projectNotes}

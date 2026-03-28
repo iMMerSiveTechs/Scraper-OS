@@ -188,6 +188,80 @@ export function SettingsTab({ settings, updateSetting, updateSettings, triggers,
         />
       </SettingsCard>
 
+      {/* Scraper Configs */}
+      <SettingsCard title="SCRAPER SOURCES" color="#ff6b35" subtitle="Configure built-in scrapers. Subreddits, X accounts, search terms.">
+        {/* Reddit */}
+        <div style={{ marginBottom: '14px' }}>
+          <div style={{ fontSize: '11px', color: '#ff4500', fontWeight: 600, marginBottom: '6px' }}>Reddit</div>
+          <FieldLabel>Subreddits (comma-separated)</FieldLabel>
+          <input
+            type="text"
+            value={(settings.redditSubreddits || []).join(', ')}
+            onChange={(e) => updateSetting('redditSubreddits', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+            placeholder="programming, webdev, machinelearning"
+            style={inputStyle}
+          />
+          <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+            {['hot', 'new', 'top', 'rising'].map((s) => (
+              <button key={s} onClick={() => updateSetting('redditSort', s)} style={{
+                padding: '3px 10px', borderRadius: '6px', cursor: 'pointer',
+                background: (settings.redditSort || 'hot') === s ? '#ff450018' : '#0a0a0f',
+                border: `1px solid ${(settings.redditSort || 'hot') === s ? '#ff450044' : '#2a2a3e'}`,
+                color: (settings.redditSort || 'hot') === s ? '#ff4500' : '#888',
+                fontSize: '10px', fontFamily: 'inherit',
+              }}>{s}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* X / Twitter */}
+        <div style={{ borderTop: '1px solid #1a1a2e', paddingTop: '14px', marginBottom: '14px' }}>
+          <div style={{ fontSize: '11px', color: '#1da1f2', fontWeight: 600, marginBottom: '6px' }}>X / Twitter</div>
+          <FieldLabel>Usernames to follow</FieldLabel>
+          <input
+            type="text"
+            value={(settings.xUsernames || []).join(', ')}
+            onChange={(e) => updateSetting('xUsernames', e.target.value.split(',').map((s) => s.trim().replace(/^@/, '')).filter(Boolean))}
+            placeholder="openai, elonmusk, anthropic"
+            style={inputStyle}
+          />
+          <div style={{ marginTop: '6px' }}>
+            <FieldLabel>Search terms</FieldLabel>
+            <input
+              type="text"
+              value={(settings.xSearchTerms || []).join(', ')}
+              onChange={(e) => updateSetting('xSearchTerms', e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+              placeholder="AI agents, web scraping"
+              style={inputStyle}
+            />
+          </div>
+          <div style={{ marginTop: '6px' }}>
+            <FieldLabel>X Bearer Token (optional, for official API)</FieldLabel>
+            <input
+              type="password"
+              value={settings.xBearerToken || ''}
+              onChange={(e) => updateSetting('xBearerToken', e.target.value)}
+              placeholder="Leave empty to use free RSS bridges"
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
+        {/* TAAFT */}
+        <div style={{ borderTop: '1px solid #1a1a2e', paddingTop: '14px' }}>
+          <div style={{ fontSize: '11px', color: '#6366f1', fontWeight: 600, marginBottom: '6px' }}>TAAFT (There's An AI For That)</div>
+          <FieldLabel>Search query</FieldLabel>
+          <input
+            type="text"
+            value={settings.taaftQuery || ''}
+            onChange={(e) => updateSetting('taaftQuery', e.target.value)}
+            placeholder="web scraping, AI agents"
+            style={inputStyle}
+          />
+          <div style={{ fontSize: '10px', color: '#555', marginTop: '4px' }}>Requires local server (npm run dev)</div>
+        </div>
+      </SettingsCard>
+
       {/* Data Settings */}
       <SettingsCard title="DATA & STORAGE" color="#888">
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>

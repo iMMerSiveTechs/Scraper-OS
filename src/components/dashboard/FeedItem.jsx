@@ -4,6 +4,11 @@ const SOURCE_CONFIG = {
   hn: { label: "HN", color: "#ff6b35", bg: "#ff6b3518" },
   github: { label: "GitHub", color: "#a78bfa", bg: "#a78bfa18" },
   producthunt: { label: "PH", color: "#00ff88", bg: "#00ff8818" },
+  reddit: { label: "Reddit", color: "#ff4500", bg: "#ff450018" },
+  x: { label: "X", color: "#1da1f2", bg: "#1da1f218" },
+  taaft: { label: "TAAFT", color: "#6366f1", bg: "#6366f118" },
+  file: { label: "File", color: "#ffaa00", bg: "#ffaa0018" },
+  custom: { label: "Custom", color: "#00d4ff", bg: "#00d4ff18" },
 };
 
 function formatTimeAgo(date) {

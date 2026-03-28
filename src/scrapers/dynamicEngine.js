@@ -194,12 +194,16 @@ function extractRSS(xml) {
       const el = entry.querySelector(tag);
       return el?.getAttribute(attr) || '';
     };
+    const getByTag = (tag) => {
+      const el = entry.getElementsByTagName(tag)[0];
+      return el?.textContent?.trim() || '';
+    };
 
     return {
       title: getText('title'),
       url: getText('link') || getAttr('link', 'href'),
       description: getText('description') || getText('summary') || getText('content'),
-      author: getText('author') || getText('dc\\:creator') || getText('creator'),
+      author: getText('author') || getText('creator') || getByTag('dc:creator'),
       pubDate: getText('pubDate') || getText('published') || getText('updated'),
       category: getText('category'),
     };
@@ -293,7 +297,7 @@ export function validateConfig(config) {
   if (config.type === 'css' || config.type === 'html') {
     if (!config.itemSelector?.trim()) {
       errors.push('Item selector is required for CSS scrapers');
-    } else {
+    } else if (typeof document !== 'undefined') {
       try {
         document.querySelector(config.itemSelector);
       } catch {

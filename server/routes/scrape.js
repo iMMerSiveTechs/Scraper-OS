@@ -24,6 +24,7 @@ function randomUA() {
  * Returns: { data: string, contentType: string, status: number }
  */
 scrapeRouter.post('/', async (req, res, next) => {
+  let timer;
   try {
     const { url, type, headers: customHeaders, timeout = 15000 } = req.body;
 
@@ -32,7 +33,7 @@ scrapeRouter.post('/', async (req, res, next) => {
     }
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeout);
+    timer = setTimeout(() => controller.abort(), timeout);
 
     const response = await fetch(url, {
       signal: controller.signal,
@@ -56,6 +57,7 @@ scrapeRouter.post('/', async (req, res, next) => {
       url: response.url, // Final URL after redirects
     });
   } catch (err) {
+    clearTimeout(timer);
     if (err.name === 'AbortError') {
       return res.status(408).json({ error: 'Request timed out' });
     }

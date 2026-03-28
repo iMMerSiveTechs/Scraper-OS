@@ -15,7 +15,7 @@ const ACTION_TYPES = [
   { value: 'digest', label: 'Include in Digest' },
 ];
 
-export function SettingsTab({ settings, updateSetting, updateSettings, triggers, triggerActions }) {
+export function SettingsTab({ settings, updateSetting, updateSettings, triggers }) {
   const [showKey, setShowKey] = useState({});
   const [validating, setValidating] = useState({});
   const [validationResult, setValidationResult] = useState({});

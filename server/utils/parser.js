@@ -43,9 +43,11 @@ export async function parseFile(content, filename, filePath) {
     case 'rs':
       return parseCode(content, filename, ext, base);
     case 'pdf':
-      return parsePDF(content, filename, base);
-    default:
-      return [{ ...base, title: filename, content: content.slice(0, 2000), metadata: { lineCount: content.split('\n').length } }];
+      return await parsePDF(content, filename, base);
+    default: {
+      const str = typeof content === 'string' ? content : content.toString('utf-8');
+      return [{ ...base, title: filename, content: str.slice(0, 2000), metadata: { lineCount: str.split('\n').length } }];
+    }
   }
 }
 
@@ -103,7 +105,7 @@ function parseCSV(content, filename, ext, base) {
 
 function parseMarkdown(content, filename, base) {
   // Split by headings
-  const sections = content.split(/^(#{1,3}\s.+)$/m);
+  const sections = content.split(/^(#{1,3}\s.+)$/m).filter((s) => s.trim());
   const items = [];
 
   // Extract frontmatter

@@ -168,6 +168,14 @@ filesRouter.get('/watch', (req, res) => {
     return res.status(400).json({ error: 'No directories specified' });
   }
 
+  // Validate all directories before opening SSE
+  let validatedDirs;
+  try {
+    validatedDirs = dirs.map(validatePath);
+  } catch (err) {
+    return res.status(403).json({ error: err.message });
+  }
+
   // Set up SSE
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
@@ -175,11 +183,18 @@ filesRouter.get('/watch', (req, res) => {
     'Connection': 'keep-alive',
   });
 
-  res.write(`data: ${JSON.stringify({ event: 'connected', dirs })}\n\n`);
+  res.write(`data: ${JSON.stringify({ event: 'connected', dirs: validatedDirs })}\n\n`);
 
-  const watcherId = createWatcher(dirs, patterns, (event) => {
-    res.write(`data: ${JSON.stringify(event)}\n\n`);
-  });
+  let watcherId;
+  try {
+    watcherId = createWatcher(validatedDirs, patterns, (event) => {
+      try { res.write(`data: ${JSON.stringify(event)}\n\n`); } catch { /* client disconnected */ }
+    });
+  } catch (err) {
+    res.write(`data: ${JSON.stringify({ event: 'error', message: err.message })}\n\n`);
+    res.end();
+    return;
+  }
 
   // Heartbeat
   const heartbeat = setInterval(() => {

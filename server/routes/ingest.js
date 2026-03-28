@@ -28,15 +28,20 @@ ingestRouter.post('/', upload.array('files', 20), async (req, res, next) => {
     }
 
     const allItems = [];
+    const errors = [];
 
     for (const file of req.files) {
-      const ext = path.extname(file.originalname).toLowerCase();
-      const isPDF = ext === '.pdf';
+      try {
+        const ext = path.extname(file.originalname).toLowerCase();
+        const isPDF = ext === '.pdf';
 
-      // For PDFs, pass the buffer directly
-      const content = isPDF ? file.buffer : file.buffer.toString('utf-8');
-      const items = await parseFile(content, file.originalname, file.originalname);
-      allItems.push(...items);
+        // For PDFs, pass the buffer directly
+        const content = isPDF ? file.buffer : file.buffer.toString('utf-8');
+        const items = await parseFile(content, file.originalname, `upload://${file.originalname}`);
+        allItems.push(...items);
+      } catch (err) {
+        errors.push({ file: file.originalname, error: err.message });
+      }
     }
 
     res.json({

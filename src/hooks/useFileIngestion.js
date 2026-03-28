@@ -223,7 +223,9 @@ export function useFileIngestion() {
   }, []);
 
   // Cleanup on unmount
-  useEffect(() => stopWatching, [stopWatching]);
+  useEffect(() => {
+    return () => stopWatching();
+  }, [stopWatching]);
 
   const addWatchDir = useCallback((dir) => {
     setWatchDirs((prev) => prev.includes(dir) ? prev : [...prev, dir]);

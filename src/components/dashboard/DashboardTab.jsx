@@ -20,6 +20,11 @@ const SOURCE_COLORS = {
   hn: "#ff6b35",
   github: "#a78bfa",
   producthunt: "#00ff88",
+  reddit: "#ff4500",
+  x: "#1da1f2",
+  taaft: "#6366f1",
+  file: "#ffaa00",
+  custom: "#00d4ff",
 };
 
 export function DashboardTab({

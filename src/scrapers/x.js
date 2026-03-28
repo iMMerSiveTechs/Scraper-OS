@@ -88,7 +88,7 @@ function parseRSSItems(rssItems, handle) {
     const link = item.querySelector('link')?.textContent?.trim() || '';
     const description = item.querySelector('description')?.textContent?.trim() || '';
     const pubDate = item.querySelector('pubDate')?.textContent?.trim() || '';
-    const creator = item.querySelector('dc\\:creator, creator')?.textContent?.trim() || handle || '';
+    const creator = item.querySelector('creator')?.textContent?.trim() || item.getElementsByTagName('dc:creator')[0]?.textContent?.trim() || handle || '';
 
     // Clean HTML from description
     const cleanDesc = description.replace(/<[^>]+>/g, '').trim();
